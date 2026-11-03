@@ -1,0 +1,24 @@
+
+name: Message automatique Discord
+
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+jobs:
+  send-message:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Envoyer le message tous les 3 jours
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          DAY=$(date -u +%s)
+          DAYS=$((DAY / 86400))
+          if [ $((DAYS % 3)) -eq 0 ]; then
+            curl -H "Content-Type: application/json" \
+              -X POST \
+              -d '{"content":"🔔 Bonjour ! Voici ton message automatique Discord !"}' \
+              "$DISCORD_WEBHOOK_URL"
+          fi
