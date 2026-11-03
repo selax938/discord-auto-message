@@ -23,6 +23,8 @@ jobs:
           if [ "$EVENT_NAME" = "workflow_dispatch" ] || { [ "$EVENT_NAME" = "schedule" ] && [ $((DAYS % 3)) -eq 0 ]; }; then
             curl -fSs -H "Content-Type: application/json" \
               -X POST \
-              -d '{"content":"🔔 Bonjour ! Voici ton message automatique Discord !"}' \
+              -d '{"content":"Allez met toi su l'do !
+            Messieurs soyez motiver, sinon vous allez finir chez Intermarché toute votre vie comme moi.
+          "}' \
               "$DISCORD_WEBHOOK_URL"
           fi
