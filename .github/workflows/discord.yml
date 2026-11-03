@@ -10,14 +10,15 @@ jobs:
   send-message:
     runs-on: ubuntu-latest
     steps:
-      - name: Envoyer le message tous les 3 jours
+      - name: Envoyer le message Discord
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
-          DAY=$(date -u +%s)
-          DAYS=$((DAY / 86400))
-          if [ $((DAYS % 3)) -eq 0 ]; then
-            curl -H "Content-Type: application/json" \
+          DAYS=$(( $(date -u +%s) / 86400 ))
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] || [ $((DAYS % 3)) -eq 0 ]; then
+            curl -f -H "Content-Type: application/json" \
               -X POST \
               -d '{"content":"🔔 Bonjour ! Voici ton message automatique Discord !"}' \
               "$DISCORD_WEBHOOK_URL"
