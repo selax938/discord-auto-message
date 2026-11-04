@@ -1,4 +1,3 @@
-
 name: Message automatique Discord
 
 on:
@@ -23,7 +22,7 @@ jobs:
           import time
           import json
           import random
-          import urllib.request
+          import subprocess
 
           messages = [
               "🦔 Le hérisson est sur le dos. Vous attendez quoi, les deux clowns ? AU BOULOT !",
@@ -33,13 +32,13 @@ jobs:
               "📦 Amazon a commencé dans un garage. Vous, vous êtes encore en train de choisir la couleur du bouton Shopify.",
               "👔 Monsieur Hamache, Monsieur Bernardo : les dividendes vous attendent. Bon, ils commencent à s'impatienter.",
               "🦔 Si le hérisson peut se mettre sur le dos, vous pouvez vous mettre au travail.",
-              "💰 Rappel : votre futur vous riche vous regarde. Il est actuellement très déçu.",
+              "💰 Votre futur vous riche vous regarde. Il est actuellement très déçu.",
               "🚀 Deux associés, une boutique, zéro vente... Pour l'instant. ON SE BOUGE !",
               "🦔 Le hérisson demande des nouvelles de votre boutique. Il commence à perdre patience.",
               "📉 Votre compte bancaire vous supplie de faire quelque chose. Même un hérisson aurait déjà lancé sa boutique.",
-              "💼 Réunion exceptionnelle : ordre du jour, arrêter de parler et commencer à vendre.",
+              "💼 Réunion exceptionnelle : arrêter de parler et commencer à vendre.",
               "🐌 Votre progression va tellement lentement que le hérisson vous double.",
-              "💸 Les gars, le but c'est de vendre des produits, pas de collectionner les onglets AliExpress.",
+              "💸 Le but c'est de vendre des produits, pas de collectionner les onglets AliExpress.",
               "🦔 LE HÉRISSON EST SUR LE DOS ! JE RÉPÈTE : LE HÉRISSON EST SUR LE DOS !",
               "🏦 Votre banquier croit encore en vous. Ne lui donnez pas tort.",
               "🚨 Monsieur Hamache et Monsieur Bernardo, veuillez reprendre une activité entrepreneuriale normale.",
@@ -60,16 +59,21 @@ jobs:
               raise SystemExit(0)
 
           message = random.choice(messages)
-          payload = json.dumps({"content": message}).encode("utf-8")
+          payload = json.dumps({"content": message}, ensure_ascii=False)
 
-          request = urllib.request.Request(
-              os.environ["DISCORD_WEBHOOK_URL"],
-              data=payload,
-              headers={"Content-Type": "application/json"},
-              method="POST"
-          )
+          result = subprocess.run([
+              "curl", "-fSs",
+              "-A", "Mozilla/5.0",
+              "-H", "Content-Type: application/json",
+              "-X", "POST",
+              "--data-binary", payload,
+              os.environ["DISCORD_WEBHOOK_URL"]
+          ], capture_output=True, text=True)
 
-          with urllib.request.urlopen(request) as response:
-              print("Message envoyé ! Code :", response.status)
-              print(message)
+          if result.returncode != 0:
+              print("Erreur Discord :", result.stderr)
+              print("Code curl :", result.returncode)
+              raise SystemExit(1)
+
+          print("Message envoyé avec succès :", message)
           PY
