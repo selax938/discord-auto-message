@@ -13,16 +13,63 @@ jobs:
   send-message:
     runs-on: ubuntu-latest
     steps:
-      - name: Envoyer le message Discord
+      - name: Envoyer une motivation aleatoire
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
-          DAYS=$(( $(date -u +%s) / 86400 ))
+          python3 - <<'PY'
+          import os
+          import time
+          import json
+          import random
+          import urllib.request
 
-          if [ "$EVENT_NAME" = "workflow_dispatch" ] || { [ "$EVENT_NAME" = "schedule" ] && [ $((DAYS % 3)) -eq 0 ]; }; then
-            curl -fSs -H "Content-Type: application/json" \
-              -X POST \
-              -d '{"content":"Allez met toi su l'do ! Messieurs soyez motiver, sinon vous allez finir chez Intermarché toute votre vie comme moi. "}' \
-              "$DISCORD_WEBHOOK_URL"
-          fi
+          messages = [
+              "🦔 Le hérisson est sur le dos. Vous attendez quoi, les deux clowns ? AU BOULOT !",
+              "💸 Hamache et Bernardo, votre chiffre d'affaires ne va pas apparaître par magie. Même le hérisson a un business plan.",
+              "🚨 Alerte : toujours pas millionnaires. La honte commence à devenir personnelle.",
+              "🦔 Le hérisson s'est mis sur le dos. C'est votre signe. Bougez-vous.",
+              "📦 Amazon a commencé dans un garage. Vous, vous êtes encore en train de choisir la couleur du bouton Shopify.",
+              "👔 Monsieur Hamache, Monsieur Bernardo : les dividendes vous attendent. Bon, ils commencent à s'impatienter.",
+              "🦔 Si le hérisson peut se mettre sur le dos, vous pouvez vous mettre au travail.",
+              "💰 Rappel : votre futur vous riche vous regarde. Il est actuellement très déçu.",
+              "🚀 Deux associés, une boutique, zéro vente... Pour l'instant. ON SE BOUGE !",
+              "🦔 Le hérisson demande des nouvelles de votre boutique. Il commence à perdre patience.",
+              "📉 Votre compte bancaire vous supplie de faire quelque chose. Même un hérisson aurait déjà lancé sa boutique.",
+              "💼 Réunion exceptionnelle : ordre du jour, arrêter de parler et commencer à vendre.",
+              "🐌 Votre progression va tellement lentement que le hérisson vous double.",
+              "💸 Les gars, le but c'est de vendre des produits, pas de collectionner les onglets AliExpress.",
+              "🦔 LE HÉRISSON EST SUR LE DOS ! JE RÉPÈTE : LE HÉRISSON EST SUR LE DOS !",
+              "🏦 Votre banquier croit encore en vous. Ne lui donnez pas tort.",
+              "🚨 Monsieur Hamache et Monsieur Bernardo, veuillez reprendre une activité entrepreneuriale normale.",
+              "💰 Un jour vous serez riches. Mais aujourd'hui, vous êtes surtout deux gars qui doivent bosser.",
+              "🦔 Le hérisson a demandé une augmentation. Il estime faire plus d'efforts que vous.",
+              "🔥 Allez les patrons ! Chaque jour sans avancer est un jour de plus où le hérisson vous juge."
+          ]
+
+          event = os.environ["EVENT_NAME"]
+          days = int(time.time()) // 86400
+
+          if event == "schedule" and days % 3 != 0:
+              print("Pas encore le jour de l'envoi.")
+              raise SystemExit(0)
+
+          if event not in ("schedule", "workflow_dispatch"):
+              print("Modification du dépôt : aucun message envoyé.")
+              raise SystemExit(0)
+
+          message = random.choice(messages)
+          payload = json.dumps({"content": message}).encode("utf-8")
+
+          request = urllib.request.Request(
+              os.environ["DISCORD_WEBHOOK_URL"],
+              data=payload,
+              headers={"Content-Type": "application/json"},
+              method="POST"
+          )
+
+          with urllib.request.urlopen(request) as response:
+              print("Message envoyé ! Code :", response.status)
+              print(message)
+          PY
